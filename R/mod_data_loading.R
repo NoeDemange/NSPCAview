@@ -6,6 +6,7 @@
 #'
 #' @noRd
 #'
+#' @useDynLib nspcaview, .registration = TRUE
 #' @importFrom shiny NS tagList
 mod_data_loading_ui <- function(id){
   ns <- NS(id)
@@ -40,10 +41,10 @@ mod_data_loading_server <- function(id,r=r){
     ns <- session$ns
     r$df <- eventReactive(input$val,{
       if(input$data == "demo (eaux_forets)"){
-        datf <- biseriatedheatmaps::demo_eaux_foret
+        datf <- nspcaview::demo_eaux_foret
         return(datf)
       }else if(input$data == "demo (botanique)"){
-        datf <- biseriatedheatmaps::demo_botanique
+        datf <- nspcaview::demo_botanique
         return(datf)
       }else if(input$data == "Your Dataset (.csv)"){
         req(input$file)

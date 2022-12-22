@@ -20,6 +20,11 @@ attachment::att_amend_desc()
 usethis::use_package("shinydashboard")
 usethis::use_package("shinycssloaders")
 usethis::use_package("ComplexHeatmap")
+usethis::use_package("nsprcomp")
+usethis::use_package("factoextra")
+usethis::use_package("viridis")
+usethis::use_package("DendSer")
+usethis::use_package("dendextend")
 
 ## Add modules ----
 ## Create a module infrastructure in R/

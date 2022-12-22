@@ -8,10 +8,15 @@ License: MIT + file LICENSE
 Imports: 
     ComplexHeatmap,
     config (>= 0.3.1),
+    dendextend,
+    DendSer,
+    factoextra,
     golem (>= 0.3.5),
+    nsprcomp,
     shiny (>= 1.7.4),
     shinycssloaders,
-    shinydashboard
+    shinydashboard,
+    viridis
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
