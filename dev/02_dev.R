@@ -17,11 +17,14 @@
 ## Amend DESCRIPTION with dependencies read from package code parsing
 ## install.package('attachment') # if needed.
 attachment::att_amend_desc()
+usethis::use_package("shinydashboard")
+usethis::use_package("shinycssloaders")
+usethis::use_package("ComplexHeatmap")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
-golem::add_module(name = "name_of_module1", with_test = TRUE) # Name of the module
-golem::add_module(name = "name_of_module2", with_test = TRUE) # Name of the module
+golem::add_module(name = "data_loading", with_test = FALSE) # Name of the module
+golem::add_module(name = "nspca", with_test = FALSE) # Name of the module
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
@@ -37,7 +40,8 @@ golem::add_sass_file("custom")
 
 ## Add internal datasets ----
 ## If you have data in your package
-usethis::use_data_raw(name = "my_dataset", open = FALSE)
+usethis::use_data_raw(name = "demo_eaux_foret", open = FALSE)
+usethis::use_data_raw(name = "demo_botanique", open = FALSE)
 
 ## Tests ----
 ## Add one line by test you want to create
