@@ -25,6 +25,7 @@ usethis::use_package("factoextra")
 usethis::use_package("viridis")
 usethis::use_package("DendSer")
 usethis::use_package("dendextend")
+usethis::use_package("grid")
 
 ## Add modules ----
 ## Create a module infrastructure in R/

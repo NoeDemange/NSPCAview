@@ -13,7 +13,8 @@
 #' @import ComplexHeatmap
 #' @import viridis
 #' @import DendSer
-#' @import dendextend
+#' @import grid
+#' @importFrom dendextend color_branches
 #' @importFrom shiny NS tagList
 mod_nspca_ui <- function(id){
   ns <- NS(id)
@@ -78,7 +79,20 @@ mod_nspca_ui <- function(id){
           shinycssloaders::withSpinner(plotOutput(ns("ht_simple"), height = "600px")),
           downloadButton(ns("down"), label = "Download the plot", style="color:#000000; display: block"),
           width=12
-      )
+      ),
+
+      box(title = "Visualisation contributions aux axes", status = "primary", solidHeader = TRUE, collapsible = TRUE,
+          numericInput(ns("nb_cont_var_plot"),
+                       "Nombre de variables n que l'on veut observer (de la plus grande contribution à n) :",
+                       value = 0, min = 0),
+          textInput(ns("axes"), "Axes à visualiser (Format: 1,10,12... )", value = "1,2,3,4"),
+          actionButton(ns("val_a4"), "valider"),
+          helpText(h3("Plot contribution variables")),
+          shinycssloaders::withSpinner(plotOutput(ns("hist_var"), height = "600px")),
+          downloadButton(ns("down_hist_var"), label = "Download the plot", style="color:#000000; display: block"),
+          ###Ajout de possibilité de charger des données textes
+          width=12
+      ),
     )
 
   )
@@ -102,14 +116,27 @@ mod_nspca_server <- function(id,r=r){
 
     #met à jour le numeric input
     observeEvent(nspca(),{
-      nb <- nrow(nspca()$x)
-      updateNumericInput(inputId = "nb_cont_ind_plot", max = nb, value = ifelse(nb<32, 1, nb%/%32))
-      updateNumericInput(inputId = "nb_cont_ind_mat", max = nb, value = ifelse(nb<32, 1, nb%/%32))
+      nb_x <- nrow(nspca()$x)
+      nb_q <- nrow(nspca()$q)
+      updateNumericInput(inputId = "nb_cont_ind_plot", max = nb_x, value = ifelse(nb_x<32, 1, nb_x%/%32))
+      updateNumericInput(inputId = "nb_cont_ind_mat", max = nb_x, value = ifelse(nb_x<32, 1, nb_x%/%32))
+      updateNumericInput(inputId = "nb_cont_var_plot", max = nb_q, value = ifelse(nb_q<32, 1, nb_q%/%32))
     })
 
     plot_hist_ind <- eventReactive(input$val_a2,{
       fviz_contrib(nspca(), choice="ind", top = input$nb_cont_ind_plot)
     })
+
+    axe <- reactive({
+      sp_st <- strsplit(input$axes,",")
+      sp_i <- as.numeric(unlist(sp_st))
+      return(sp_i)
+    })
+
+    plot_hist_var <- eventReactive(input$val_a4,{
+      fviz_contrib(nspca(), choice="var", top = input$nb_cont_var_plot, axes=axe())
+    })
+
 
     matnspca_o <- reactive({
       MatNSPCA <- as.matrix(nspca()$x)
@@ -142,16 +169,17 @@ mod_nspca_server <- function(id,r=r){
     datamat <- reactive({
       mat_o <- matnspca_o()
       mat <- mat_o[vec_mat(),]
+      return(mat)
     })
 
     #distance ligne
     distm_ml <- reactive({
-      dMat <- stats::dist(datamat(), method = input$inDist_num)
+      dMat <- stats::dist(datamat(), method = input$inDist)
     })
 
     #distance colonne
-    distm_mc <- reactive(
-      TdMat <- stats::dist(t(as.matrix(datamat())), method = input$inDist_num)
+    distm_mc <- reactive({
+      TdMat <- stats::dist(t(as.matrix(datamat())), method = input$inDist)
     })
 
     HC_l <- reactive({
@@ -193,8 +221,8 @@ mod_nspca_server <- function(id,r=r){
                                 col = fun_color(),
                                 column_names_max_height = max_text_width(colnames(mat)),
                                 row_names_gp = gpar(fontsize = 6.5 + 1/log10(nrow(mat))),
-                                column_split = input$K_sp , column_title_gp = gpar(col = c(1:N), font = 1/N),
-                                column_names_gp = gpar(col = c(1:N), fontsize = 4+ 1/log10(ncol(mat))))
+                                column_split = input$K_sp , column_title_gp = gpar(col = c(1:input$K_sp), font = 1/input$K_sp),
+                                column_names_gp = gpar(col = c(1:input$K_sp), fontsize = 4+ 1/log10(ncol(mat))))
 
       draw(ComplexHeatmap)
     })
@@ -239,6 +267,21 @@ mod_nspca_server <- function(id,r=r){
         grDevices::dev.off()  # turn the device off
       })
 
+    output$hist_var <- renderPlot({
+      req(plot_hist_var)
+      plot_hist_var()
+    })
+
+    output$down_hist_var <- downloadHandler(
+      filename =  function() {
+        paste0("Contribution des ",input$nb_cont_var_plot," individus.pdf")
+      },
+      # content is a function with argument file. content writes the plot to the device
+      content = function(file) {
+        grDevices::pdf(file) # open the pdf device
+        plot(plot_hist_var())
+        grDevices::dev.off()  # turn the device off
+      })
 
   })
 }

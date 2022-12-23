@@ -12,6 +12,7 @@ Imports:
     DendSer,
     factoextra,
     golem (>= 0.3.5),
+    grid,
     nsprcomp,
     shiny (>= 1.7.4),
     shinycssloaders,
