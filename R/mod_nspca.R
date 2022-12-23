@@ -34,7 +34,7 @@ mod_nspca_ui <- function(id){
       ),
       box(title = "Heatmap", status = "primary", solidHeader = TRUE, collapsible = TRUE,
           helpText(h3("Matrice")),
-          numericInput(ns("nb_cont_ind_mat"), "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :", value = 50, min = 0),
+          numericInput(ns("nb_cont_ind_mat"), "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :", value = 0, min = 0),
           textInput(ns("ind_retir"), "Numéro des individus à retirer (Format: 1,10,12... )"),
 
 ###Ajouter tous les choix pour distance et tout  et pour heatmap et possibilité charger la matrice qu'on crée
@@ -68,17 +68,18 @@ mod_nspca_server <- function(id,r=r){
 
     #met à jour le numeric input
     observeEvent(nspca(),{
-      nb <- nrow(nspca()$q)
+      nb <- nrow(nspca()$x)
       updateNumericInput(inputId = "nb_cont_ind_plot", max = nb, value = ifelse(nb<32, 1, nb%/%32))
+      updateNumericInput(inputId = "nb_cont_ind_mat", max = nb, value = ifelse(nb<32, 1, nb%/%32))
+    })
+
+    plot_hist_ind <- eventReactive(input$val_a2,{
+      fviz_contrib(nspca(), choice="ind", top = input$nb_cont_ind_plot)
     })
 
     matnspca_o <- reactive({
       MatNSPCA <- as.matrix(nspca()$x)
       MatNSPCAord <- MatNSPCA[order(rowSums(MatNSPCA),decreasing=T),]
-    })
-
-    plot_hist_ind <- eventReactive(input$val_a2,{
-      fviz_contrib(nspca(), choice="ind", top = input$nb_cont_ind_plot)
     })
 
     ##output
