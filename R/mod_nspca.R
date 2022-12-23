@@ -39,6 +39,7 @@ mod_nspca_ui <- function(id){
           helpText(h3("Matrice")),
           numericInput(ns("nb_cont_ind_mat"), "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :", value = 0, min = 0),
           textInput(ns("ind_retir"), "Numéro des individus à retirer (Format: 1,10,12... )"),
+          downloadButton(ns("down_data"), label = "Download the matrix", style="color:#000000; display: block"),
           helpText(h3("Traitement")),
           column(4,
                  selectInput(ns('inDist'),"Distance", c("euclidean","maximum",
@@ -85,7 +86,7 @@ mod_nspca_ui <- function(id){
           numericInput(ns("nb_cont_var_plot"),
                        "Nombre de variables n que l'on veut observer (de la plus grande contribution à n) :",
                        value = 0, min = 0),
-          textInput(ns("axes"), "Axes à visualiser (Format: 1,10,12... )", value = "1,2,3,4"),
+          textInput(ns("axes"), "Composantes principales à visualiser (Format: 1,10,12... )", value = "1,2,3,4"),
           actionButton(ns("val_a4"), "valider"),
           helpText(h3("Plot contribution variables")),
           shinycssloaders::withSpinner(plotOutput(ns("hist_var"), height = "600px")),
@@ -143,15 +144,18 @@ mod_nspca_server <- function(id,r=r){
       MatNSPCAord <- MatNSPCA[order(rowSums(MatNSPCA),decreasing=T),]
     })
 
-    vec_mat <- reactive({
-        v <- seq(1,input$nb_cont_ind_mat)
-        sp_st <- strsplit(input$ind_retir,",")
-        sp_i <- as.numeric(unlist(sp_st))
-        vec <- v[! v %in% sp_i]
-        return(vec)
+    ###Heatmap
+
+    ret_ind <- reactive({
+      sp_st <- strsplit(input$ind_retir,",")
+      sp_i <- as.numeric(unlist(sp_st))
     })
 
-    ###Heatmap
+    vec_mat <- reactive({
+        v <- seq(1,input$nb_cont_ind_mat)
+        vec <- v[! v %in% ret_ind()]
+        return(vec)
+    })
 
     fun_color <- reactive({
       switch(input$color,
@@ -282,6 +286,15 @@ mod_nspca_server <- function(id,r=r){
         plot(plot_hist_var())
         grDevices::dev.off()  # turn the device off
       })
+
+    output$down_data <- downloadHandler(
+      filename = function() {
+        paste0(input$nb_cont_ind_mat," ind without ", ret_ind() , ".csv")
+      },
+      content = function(file) {
+        write.csv(datamat(), file)
+      }
+    )
 
   })
 }
