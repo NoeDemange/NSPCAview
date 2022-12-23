@@ -20,9 +20,13 @@ mod_nspca_ui <- function(id){
       box(title = "NSPCA", status = "primary", solidHeader = TRUE, collapsible = TRUE,
           helpText(h3("Setting NSPCA")),
           numericInput(ns("nb_comp"), "Nombre de composante :", value = 10, min = 0),
-          helpText(h3("Visualisation contribution individus")),
-          numericInput(ns("nb_cont_ind_plot"), "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :", value = 50, min = 0),
           actionButton(ns("val_a1"), "valider"),
+          helpText(h3("Visualisation contribution individus")),
+          numericInput(ns("nb_cont_ind_plot"),
+            "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :",
+            value = 0, min = 0),
+          actionButton(ns("val_a2"), "valider"),
+          helpText(h3("Plot contribution individus")),
           shinycssloaders::withSpinner(plotOutput(ns("hist_ind"), height = "600px")),
           downloadButton(ns("down_hist_ind"), label = "Download the plot", style="color:#000000; display: block"),
           ###Ajout de possibilité de charger des données textes
@@ -53,9 +57,19 @@ mod_nspca_server <- function(id,r=r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
 
-    nspca <- reactive({
+    nspca <- eventReactive(input$val_a1,{
       req(r$df())
+      #notification
+      id <- showNotification("Running nspca... Wait", duration = NULL, closeButton = FALSE, type = "warning")
+      on.exit(removeNotification(id), add = TRUE)
+      #pca
       NSPCA <- nsprcomp(r$df(), ncomp =input$nb_comp, nneg=TRUE, scale.=TRUE)
+    })
+
+    #met à jour le numeric input
+    observeEvent(nspca(),{
+      nb <- nrow(nspca()$q)
+      updateNumericInput(inputId = "nb_cont_ind_plot", max = nb, value = ifelse(nb<32, 1, nb%/%32))
     })
 
     matnspca_o <- reactive({
@@ -63,7 +77,7 @@ mod_nspca_server <- function(id,r=r){
       MatNSPCAord <- MatNSPCA[order(rowSums(MatNSPCA),decreasing=T),]
     })
 
-    plot_hist_ind <- eventReactive(input$val_a1,{
+    plot_hist_ind <- eventReactive(input$val_a2,{
       fviz_contrib(nspca(), choice="ind", top = input$nb_cont_ind_plot)
     })
 
