@@ -5,6 +5,7 @@
 #' @import shiny
 #' @import shinydashboard
 #' @noRd
+suppressMessages(suppressWarnings(library(dendextend)))
 app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
