@@ -39,7 +39,7 @@ mod_nspca_ui <- function(id){
           helpText(h3("Matrice")),
           numericInput(ns("nb_cont_ind_mat"), "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :", value = 0, min = 0),
           textInput(ns("ind_retir"), "Numéro des individus à retirer (Format: 1,10,12... )"),
-          downloadButton(ns("down_data"), label = "Download the matrix", style="color:#000000; display: block"),
+          downloadButton(ns("down_data"), label = "Download the contribution matrix", style="color:#000000; display: block"),
           helpText(h3("Traitement")),
           column(4,
                  selectInput(ns('inDist'),"Distance", c("euclidean","maximum",
@@ -112,16 +112,16 @@ mod_nspca_server <- function(id,r=r){
       id <- showNotification("Running nspca... Wait", duration = NULL, closeButton = FALSE, type = "warning")
       on.exit(removeNotification(id), add = TRUE)
       #pca
-      NSPCA <- nsprcomp(r$df(), ncomp =input$nb_comp, nneg=TRUE, scale.=TRUE)
+      NSPCA <- nsprcomp(r$df(), ncomp =input$nb_comp, nneg=TRUE, scale.=TRUE, center=FALSE)
     })
 
     #met à jour le numeric input
     observeEvent(nspca(),{
       nb_x <- nrow(nspca()$x)
       nb_q <- nrow(nspca()$q)
-      updateNumericInput(inputId = "nb_cont_ind_plot", max = nb_x, value = ifelse(nb_x<32, 1, nb_x%/%32))
-      updateNumericInput(inputId = "nb_cont_ind_mat", max = nb_x, value = ifelse(nb_x<32, 1, nb_x%/%32))
-      updateNumericInput(inputId = "nb_cont_var_plot", max = nb_q, value = ifelse(nb_q<32, 1, nb_q%/%32))
+      updateNumericInput(inputId = "nb_cont_ind_plot", max = nb_x, value = nb_x)
+      updateNumericInput(inputId = "nb_cont_ind_mat", max = nb_x, value = nb_x)
+      updateNumericInput(inputId = "nb_cont_var_plot", max = nb_q, value = nb_q)
     })
 
     plot_hist_ind <- eventReactive(input$val_a2,{
