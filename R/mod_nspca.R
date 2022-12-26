@@ -23,6 +23,18 @@ mod_nspca_ui <- function(id){
       box(title = "NSPCA", status = "primary", solidHeader = TRUE, collapsible = TRUE,
           helpText(h3("Setting NSPCA")),
           numericInput(ns("nb_comp"), "Nombre de composante :", value = 10, min = 0),
+          column(6,
+                 radioButtons(ns("scale"),"Scale",
+                              choiceNames = c("True","False"),
+                              choiceValues = c(TRUE,FALSE),
+                              selected = TRUE,inline = TRUE),
+                 ),
+          column(6,
+                 radioButtons(ns("center"),"Center",
+                              choiceNames = c("True","False"),
+                              choiceValues = c(TRUE,FALSE),
+                              selected = FALSE,inline = TRUE),
+          ),
           actionButton(ns("val_a1"), "valider"),
           helpText(h3("Visualisation contribution individus")),
           numericInput(ns("nb_cont_ind_plot"),
@@ -32,6 +44,7 @@ mod_nspca_ui <- function(id){
           helpText(h3("Plot contribution individus")),
           shinycssloaders::withSpinner(plotOutput(ns("hist_ind"), height = "600px")),
           downloadButton(ns("down_hist_ind"), label = "Download the plot", style="color:#000000; display: block"),
+          downloadButton(ns("down_histInd"), label = "Download data", style="color:#000000; display: block"),
           ###Ajout de possibilité de charger des données textes
           width=12
       ),
@@ -91,6 +104,7 @@ mod_nspca_ui <- function(id){
           helpText(h3("Plot contribution variables")),
           shinycssloaders::withSpinner(plotOutput(ns("hist_var"), height = "600px")),
           downloadButton(ns("down_hist_var"), label = "Download the plot", style="color:#000000; display: block"),
+          downloadButton(ns("down_histVar"), label = "Download data", style="color:#000000; display: block"),
           ###Ajout de possibilité de charger des données textes
           width=12
       ),
@@ -112,20 +126,20 @@ mod_nspca_server <- function(id,r=r){
       id <- showNotification("Running nspca... Wait", duration = NULL, closeButton = FALSE, type = "warning")
       on.exit(removeNotification(id), add = TRUE)
       #pca
-      NSPCA <- nsprcomp(r$df(), ncomp =input$nb_comp, nneg=TRUE, scale.=TRUE, center=FALSE)
+      NSPCA <- nsprcomp(r$df(), ncomp =input$nb_comp, nneg=TRUE, scale.= as.logical(input$scale), center=as.logical(input$center))
     })
 
     #met à jour le numeric input
     observeEvent(nspca(),{
       nb_x <- nrow(nspca()$x)
-      nb_q <- nrow(nspca()$q)
+      nb_r <- nrow(nspca()$rotation)
       updateNumericInput(inputId = "nb_cont_ind_plot", max = nb_x, value = nb_x)
       updateNumericInput(inputId = "nb_cont_ind_mat", max = nb_x, value = nb_x)
-      updateNumericInput(inputId = "nb_cont_var_plot", max = nb_q, value = nb_q)
+      updateNumericInput(inputId = "nb_cont_var_plot", max = nb_r, value = nb_r)
     })
 
     plot_hist_ind <- eventReactive(input$val_a2,{
-      fviz_contrib(nspca(), choice="ind", top = input$nb_cont_ind_plot)
+      fviz_contrib(nspca(), choice="ind", top = input$nb_cont_ind_plot, axes=seq(input$nb_comp))
     })
 
     axe <- reactive({
@@ -140,8 +154,12 @@ mod_nspca_server <- function(id,r=r){
 
 
     matnspca_o <- reactive({
+      dd <- facto_summarize(nspca(), element = "ind", result = "contrib",
+                            axes = seq(input$nb_comp))
+      contrib <- dd$contrib
+      names(contrib) <- rownames(dd)
       MatNSPCA <- as.matrix(nspca()$x)
-      MatNSPCAord <- MatNSPCA[order(rowSums(MatNSPCA),decreasing=T),]
+      MatNSPCAord <- MatNSPCA[order(contrib,decreasing = T),]
     })
 
     ###Heatmap
@@ -293,6 +311,39 @@ mod_nspca_server <- function(id,r=r){
       },
       content = function(file) {
         write.csv(datamat(), file)
+      }
+    )
+
+    output$down_histInd <- downloadHandler(
+      filename = function() {
+        paste0("Hist_Ind_", input$nb_cont_ind_plot , ".csv")
+      },
+      content = function(file) {
+        #write.csv(matnspca_o()[seq(input$nb_cont_ind_plot),], file)
+        dd <- facto_summarize(nspca(), element = "ind", result = "contrib",
+                              axes = seq(input$nb_comp))
+        contrib <- dd$contrib
+        names(contrib) <- rownames(dd)
+        contrib <- contrib[order(contrib,decreasing = T)]
+        write.csv(contrib[seq(input$nb_cont_ind_plot)],file)
+      }
+    )
+
+    output$down_histVar <- downloadHandler(
+      filename = function() {
+        paste0("Hist_Var_", input$nb_cont_var_plot,"_PC_",input$axes, ".csv")
+      },
+      content = function(file) {
+        # MatNSPCAr <- as.matrix(nspca()$rotation)
+        # MatNSPCAra <- MatNSPCAr[,axe()]
+        # MatNSPCAraord <- MatNSPCAra[order(rowSums(MatNSPCAra),decreasing=T),]
+        # write.csv(MatNSPCAraord[seq(input$nb_cont_var_plot),], file)
+        dd <- facto_summarize(nspca(), element = "var", result = "contrib",
+                              axes = axe())
+        contrib <- dd$contrib
+        names(contrib) <- rownames(dd)
+        contrib <- contrib[order(contrib,decreasing = T)]
+        write.csv(contrib[seq(input$nb_cont_var_plot)],file)
       }
     )
 
