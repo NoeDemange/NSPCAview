@@ -14,6 +14,8 @@
 #' @import viridis
 #' @import DendSer
 #' @import grid
+#' @import cluster
+#' @importFrom utils write.csv
 #' @importFrom dendextend color_branches
 #' @importFrom shiny NS tagList
 mod_nspca_ui <- function(id){
@@ -45,13 +47,13 @@ mod_nspca_ui <- function(id){
           shinycssloaders::withSpinner(plotOutput(ns("hist_ind"), height = "600px")),
           downloadButton(ns("down_hist_ind"), label = "Download the plot", style="color:#000000; display: block"),
           downloadButton(ns("down_histInd"), label = "Download data", style="color:#000000; display: block"),
-          ###Ajout de possibilité de charger des données textes
+          ###Ajout de possibilité de charger des donnees textes
           width=12
       ),
       box(title = "Heatmap", status = "primary", solidHeader = TRUE, collapsible = TRUE,
           helpText(h3("Matrice")),
           numericInput(ns("nb_cont_ind_mat"), "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :", value = 0, min = 0),
-          textInput(ns("ind_retir"), "Numéro des individus à retirer (Format: 1,10,12... )"),
+          textInput(ns("ind_retir"), "Numero des individus a retirer (Format: 1,10,12... )"),
           downloadButton(ns("down_data"), label = "Download the contribution matrix", style="color:#000000; display: block"),
           helpText(h3("Traitement")),
           column(4,
@@ -84,7 +86,7 @@ mod_nspca_ui <- function(id){
                                                            "cividis","rocket","mako","turbo"),selected="magma")
           ),
           column(6,
-                 textInput(ns("legend_name"),"Entrez un nom de légende",value = "legendname"),
+                 textInput(ns("legend_name"),"Entrez un nom de legende",value = "legendname"),
                  ),
           column(6,
           actionButton(ns("val_a3"), "valider")
@@ -97,9 +99,9 @@ mod_nspca_ui <- function(id){
 
       box(title = "Visualisation contributions aux axes", status = "primary", solidHeader = TRUE, collapsible = TRUE,
           numericInput(ns("nb_cont_var_plot"),
-                       "Nombre de variables n que l'on veut observer (de la plus grande contribution à n) :",
+                       "Nombre de variables n que l'on veut observer (de la plus grande contribution a n) :",
                        value = 0, min = 0),
-          textInput(ns("axes"), "Composantes principales à visualiser (Format: 1,10,12... )", value = "1,2,3,4"),
+          textInput(ns("axes"), "Composantes principales a visualiser (Format: 1,10,12... )", value = "1,2,3,4"),
           actionButton(ns("val_a4"), "valider"),
           helpText(h3("Plot contribution variables")),
           shinycssloaders::withSpinner(plotOutput(ns("hist_var"), height = "600px")),

@@ -26,6 +26,8 @@ usethis::use_package("viridis")
 usethis::use_package("DendSer")
 usethis::use_package("dendextend")
 usethis::use_package("grid")
+usethis::use_package("seriation")
+usethis::use_package("cluster")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
