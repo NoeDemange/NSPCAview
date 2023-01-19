@@ -21,18 +21,22 @@
 golem::fill_desc(
   pkg_name = "nspcaview", # The Name of the package containing the App
   pkg_title = "NSPCAview", # The Title of the package containing the App
-  pkg_description = "Analysis of matrix by NSPCA", # The Description of the package containing the App
-  authors = c(person(given = "Guillaume",
-                     family = "Sapriel",
-                     role = c("cre", "aut"),
-                     email = "guillaume.sapriel@uvsq.fr",
-                     comment = c(ORCID = "0000-0003-0549-9376")),
-              person(given = "Noé",
-                     family = "Demange",
-                     role = "aut",
-                     email = "demange.noe@outlook.fr")),
+  pkg_description = "Analysis of matrix by NSPCA.", # The Description of the package containing the App
+  author_first_name = "Noe", # Your First Name
+  author_last_name = "Demange", # Your Last Name
+  author_email = "demange.noe@outlook.fr", # Your Email
   repo_url = "https://github.com/NoeDemange/NSPCAview"
 )
+
+desc::desc_set_authors(c(person(given = "Guillaume",
+                                family = "Sapriel",
+                                role = "aut",
+                                email = "guillaume.sapriel@uvsq.fr",
+                                comment = c(ORCID = "0000-0003-0549-9376")),
+                         person(given = "Noé",
+                                family = "Demange",
+                                role = c("cre", "aut"),
+                                email = "demange.noe@outlook.fr")))
 
 ## Set {golem} options ----
 golem::set_golem_options()

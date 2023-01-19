@@ -18,6 +18,7 @@
 devtools::check()
 rhub::check_for_cran()
 
+
 # Deploy
 
 ## Local, CRAN or Package Manager ----

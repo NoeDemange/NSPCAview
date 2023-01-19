@@ -1,10 +1,17 @@
 Package: nspcaview
-Title: An Amazing Shiny App
+Title: NSPCAview
 Version: 0.0.0.9000
-Authors@R: 
-    person("firstname", "lastname", , "your@email.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: c(
+    person("Guillaume", "Sapriel", , "guillaume.sapriel@uvsq.fr", role = "aut",
+           comment = c(ORCID = "0000-0003-0549-9376")),
+    person("Noé", "Demange", , "demange.noe@outlook.fr", role = c("cre", "aut"))
+  )
+Description: Analysis of matrix by NSPCA.
 License: MIT + file LICENSE
+URL: https://github.com/NoeDemange/NSPCAview
+BugReports: https://github.com/NoeDemange/NSPCAview/issues
+Depends: 
+    R (>= 2.10)
 Imports: 
     cluster,
     ComplexHeatmap,
@@ -13,18 +20,20 @@ Imports:
     DendSer,
     factoextra,
     golem (>= 0.3.5),
+    grDevices,
     grid,
     nsprcomp,
     seriation,
     shiny (>= 1.7.4),
     shinycssloaders,
     shinydashboard,
+    stats,
+    tools,
+    utils,
     viridis
-Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.2.3
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Depends: 
-    R (>= 2.10)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3
