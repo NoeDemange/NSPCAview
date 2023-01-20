@@ -21,7 +21,7 @@
 golem::fill_desc(
   pkg_name = "nspcaview", # The Name of the package containing the App
   pkg_title = "NSPCAview", # The Title of the package containing the App
-  pkg_description = "Analysis of matrix by NSPCA.", # The Description of the package containing the App
+  pkg_description = "Optimised matrix visualization of Non-negative Sparse PCA components.", # The Description of the package containing the App
   author_first_name = "Noe", # Your First Name
   author_last_name = "Demange", # Your Last Name
   author_email = "demange.noe@outlook.fr", # Your Email
