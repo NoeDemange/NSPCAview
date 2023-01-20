@@ -18,6 +18,7 @@ app_ui <- function(request) {
         sidebarMenu(
           menuItem("Dataset", tabName = "dataset", icon = icon("fas fa-file-arrow-down")),
           menuItem("NSPCA", tabName = "nspca", icon = icon("fas fa-bar-chart")),
+          menuItem("Information", tabName = "information", icon = icon("fas fa-info-circle")),
           style = "font-size:18px"
         )
       ),
@@ -29,6 +30,9 @@ app_ui <- function(request) {
             ),
             tabItem(tabName="nspca",
                     mod_nspca_ui("nspca_1")
+            ),
+            tabItem(tabName= "information",
+                    mod_information_ui("information_1")
             )
           )
         )
