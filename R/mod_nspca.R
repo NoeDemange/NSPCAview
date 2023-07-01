@@ -23,26 +23,38 @@ mod_nspca_ui <- function(id){
   tagList(
     fluidPage(
       box(title = "NSPCA", status = "primary", solidHeader = TRUE, collapsible = TRUE,
+          ###Setting NSPCA###
           helpText(h3("Setting NSPCA")),
-          numericInput(ns("nb_comp"), "Nombre de composante :", value = 10, min = 0),
-          column(6,
+          column(4,
+            numericInput(ns("nb_comp"), "Nombre de composante :", value = 10, min = 0),
+          ),
+          column(4,
                  radioButtons(ns("scale"),"Scale",
                               choiceNames = c("True","False"),
                               choiceValues = c(TRUE,FALSE),
                               selected = TRUE,inline = TRUE),
-                 ),
-          column(6,
+          ),
+          column(4,
                  radioButtons(ns("center"),"Center",
                               choiceNames = c("True","False"),
                               choiceValues = c(TRUE,FALSE),
                               selected = FALSE,inline = TRUE),
           ),
-          actionButton(ns("val_a1"), "valider"),
+          column(12,
+            actionButton(ns("val_a1"), "valider"),
+          ),
+          ###Visualisation contribution individus###
           helpText(h3("Visualisation contribution individus")),
-          numericInput(ns("nb_cont_ind_plot"),
+          column(6,
+            numericInput(ns("nb_cont_ind_plot"),
             "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :",
             value = 0, min = 0),
+          ),
+          column(6,
+            numericInput(ns("plot_ind_x_font_size"), "Size of label", value = 10, min = 0, max = 100),
+          ),
           actionButton(ns("val_a2"), "valider"),
+          ###Plot contribution individus###
           helpText(h3("Plot contribution individus")),
           shinycssloaders::withSpinner(plotOutput(ns("hist_ind"), height = "600px")),
           downloadButton(ns("down_hist_ind"), label = "Download the plot", style="color:#000000; display: block"),
@@ -52,9 +64,15 @@ mod_nspca_ui <- function(id){
       ),
       box(title = "Heatmap", status = "primary", solidHeader = TRUE, collapsible = TRUE,
           helpText(h3("Matrice")),
-          numericInput(ns("nb_cont_ind_mat"), "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :", value = 0, min = 0),
-          textInput(ns("ind_retir"), "Numero des individus a retirer (Format: 1,10,12... )"),
-          downloadButton(ns("down_data"), label = "Download the contribution matrix", style="color:#000000; display: block"),
+          column(6,
+            numericInput(ns("nb_cont_ind_mat"), "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :", value = 0, min = 0),
+          ),
+          column(6,
+            textInput(ns("ind_retir"), "Numero des individus a retirer (Format: 1,10,12... )"),
+          ),
+          column(12,
+            downloadButton(ns("down_data"), label = "Download the contribution matrix", style="color:#000000; display: block"),
+          ),
           helpText(h3("Traitement")),
           column(4,
                  selectInput(ns('inDist'),"Distance", c("euclidean","maximum",
@@ -74,7 +92,7 @@ mod_nspca_ui <- function(id){
           column(6,
                  numericInput(ns("K_sp"),
                               "Nombre de groupes :",
-                              value = 7, min = 0),
+                              value = 2, min = 0),
           ),
           column(6,
                  numericInput(ns("C"),
@@ -82,15 +100,19 @@ mod_nspca_ui <- function(id){
                               value = 2, min = 0),
           ),
           column(6,
-                 selectInput(ns("color"),"Heatmap color",c("magma","inferno","plasma","viridis",
-                                                           "cividis","rocket","mako","turbo"),selected="magma")
+                 numericInput(ns("heatmap_fontsize_col"), "Column fontsize", value = 6.5, min = 0, max = 100, step = 0.1),
+          ),
+          column(6,
+                 numericInput(ns("heatmap_fontsize_row"), "Row fontsize", value = 4, min = 0, max = 100, step = 0.1),
           ),
           column(6,
                  textInput(ns("legend_name"),"Entrez un nom de legende",value = "legendname"),
-                 ),
-          column(6,
-          actionButton(ns("val_a3"), "valider")
           ),
+          column(6,
+                 selectInput(ns("color"),"Heatmap color",c("magma","inferno","plasma","viridis",
+                                                           "cividis","rocket","mako","turbo"),selected="magma")
+          ),
+          actionButton(ns("val_a3"), "valider"),
           helpText(h3("Heatmap")),
           shinycssloaders::withSpinner(plotOutput(ns("ht_simple"), height = "600px")),
           downloadButton(ns("down"), label = "Download the plot", style="color:#000000; display: block"),
@@ -101,7 +123,12 @@ mod_nspca_ui <- function(id){
           numericInput(ns("nb_cont_var_plot"),
                        "Nombre de variables n que l'on veut observer (de la plus grande contribution a n) :",
                        value = 0, min = 0),
-          textInput(ns("axes"), "Composantes principales a visualiser (Format: 1,10,12... )", value = "1,2,3,4"),
+          column(6,
+            textInput(ns("axes"), "Composantes principales a visualiser (Format: 1,10,12... )", value = "1,2,3,4"),
+          ),
+          column(6,
+            numericInput(ns("plot_var_x_font_size"), "Size of label", value = 10, min = 0, max = 100),
+          ),
           actionButton(ns("val_a4"), "valider"),
           helpText(h3("Plot contribution variables")),
           shinycssloaders::withSpinner(plotOutput(ns("hist_var"), height = "600px")),
@@ -141,7 +168,7 @@ mod_nspca_server <- function(id,r=r){
     })
 
     plot_hist_ind <- eventReactive(input$val_a2,{
-      fviz_contrib(nspca(), choice="ind", top = input$nb_cont_ind_plot, axes=seq(input$nb_comp))
+      fviz_contrib(nspca(), choice="ind", top = input$nb_cont_ind_plot, axes=seq(input$nb_comp), font.xtickslab=input$plot_ind_x_font_size)
     })
 
     axe <- reactive({
@@ -151,7 +178,7 @@ mod_nspca_server <- function(id,r=r){
     })
 
     plot_hist_var <- eventReactive(input$val_a4,{
-      fviz_contrib(nspca(), choice="var", top = input$nb_cont_var_plot, axes=axe())
+      fviz_contrib(nspca(), choice="var", top = input$nb_cont_var_plot, axes=axe(), font.xtickslab=input$plot_var_x_font_size)
     })
 
 
@@ -165,6 +192,9 @@ mod_nspca_server <- function(id,r=r){
     })
 
     ###Heatmap
+    observeEvent(nspca(),{
+      updateNumericInput(inputId = "K_sp", max = input$nb_comp, min = 0, value = input$nb_comp/2)
+    })
 
     ret_ind <- reactive({
       sp_st <- strsplit(input$ind_retir,",")
@@ -244,9 +274,9 @@ mod_nspca_server <- function(id,r=r){
                                 show_column_dend = TRUE,
                                 col = fun_color(),
                                 column_names_max_height = max_text_width(colnames(mat)),
-                                row_names_gp = gpar(fontsize = 6.5 + 1/log10(nrow(mat))),
+                                row_names_gp = gpar(fontsize = input$heatmap_fontsize_row),
                                 column_split = input$K_sp , column_title_gp = gpar(col = c(1:input$K_sp), font = 1/input$K_sp),
-                                column_names_gp = gpar(col = c(1:input$K_sp), fontsize = 4+ 1/log10(ncol(mat))))
+                                column_names_gp = gpar(col = c(1:input$K_sp), fontsize = input$heatmap_fontsize_col))
 
       draw(ComplexHeatmap)
     })
