@@ -59,7 +59,7 @@ mod_nspca_ui <- function(id){
           shinycssloaders::withSpinner(plotOutput(ns("hist_ind"), height = "600px")),
           downloadButton(ns("down_hist_ind"), label = "Download the plot", style="color:#000000; display: block"),
           downloadButton(ns("down_histInd"), label = "Download data", style="color:#000000; display: block"),
-          ###Ajout de possibilité de charger des donnees textes
+          ###Ajout de possibilite de charger des donnees textes
           width=12
       ),
       box(title = "Heatmap", status = "primary", solidHeader = TRUE, collapsible = TRUE,

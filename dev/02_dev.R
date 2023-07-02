@@ -28,6 +28,7 @@ usethis::use_package("dendextend")
 usethis::use_package("grid")
 usethis::use_package("seriation")
 usethis::use_package("cluster")
+usethis::use_package("shinyFeedback")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
