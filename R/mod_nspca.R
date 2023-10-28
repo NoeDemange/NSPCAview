@@ -15,12 +15,15 @@
 #' @import DendSer
 #' @import grid
 #' @import cluster
+#' @import shinyFeedback
 #' @importFrom utils write.csv
 #' @importFrom dendextend color_branches
 #' @importFrom shiny NS tagList
+#' @importFrom grDevices rainbow
 mod_nspca_ui <- function(id){
   ns <- NS(id)
   tagList(
+    useShinyFeedback(),
     fluidPage(
       box(title = "NSPCA", status = "primary", solidHeader = TRUE, collapsible = TRUE,
           ###Setting NSPCA###
@@ -43,11 +46,16 @@ mod_nspca_ui <- function(id){
           column(12,
             actionButton(ns("val_a1"), "valider"),
           ),
+          ###Contribution des dimensions a la variance totale###
+          helpText(h3("Plot contribution des dimensions a la variance totale")),
+          shinycssloaders::withSpinner(plotOutput(ns("hist_dim_var"), height = "600px")),
+          downloadButton(ns("down_dim_var"), label = "Download the plot", style="color:#000000; display: block"),
+          downloadButton(ns("down_dim_var_data"), label = "Download data", style="color:#000000; display: block"),
           ###Visualisation contribution individus###
           helpText(h3("Visualisation contribution individus")),
           column(6,
             numericInput(ns("nb_cont_ind_plot"),
-            "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :",
+            "Nombre d'individus n que l'on veut observer (de la plus grande contribution a n) :",
             value = 0, min = 0),
           ),
           column(6,
@@ -65,7 +73,7 @@ mod_nspca_ui <- function(id){
       box(title = "Heatmap", status = "primary", solidHeader = TRUE, collapsible = TRUE,
           helpText(h3("Matrice")),
           column(6,
-            numericInput(ns("nb_cont_ind_mat"), "Nombre d'individus n que l'on veut observer (de la plus grande contribution à n) :", value = 0, min = 0),
+            numericInput(ns("nb_cont_ind_mat"), "Nombre d'individus n que l'on veut observer (de la plus grande contribution a n) :", value = 0, min = 0),
           ),
           column(6,
             textInput(ns("ind_retir"), "Numero des individus a retirer (Format: 1,10,12... )"),
@@ -77,7 +85,7 @@ mod_nspca_ui <- function(id){
           column(4,
                  selectInput(ns('inDist'),"Distance", c("euclidean","maximum",
                                                         "manhattan","canberra",
-                                                        "binary","minkowski"), selected = "euclidean"),
+                                                        "binary","minkowski"), selected = "maximum"),
           ),
           column(4,
                  selectInput(ns('inHC'),"Clustering hierarchique", c("ward.D","ward.D2",
@@ -88,7 +96,7 @@ mod_nspca_ui <- function(id){
           column(4,
                  selectInput(ns('ser'),"Seriation", choices = c("Oui","Non"), selected="Oui"),
           ),
-          helpText(h3("Paramètres Heatmap")),
+          helpText(h3("Parametres Heatmap")),
           column(6,
                  numericInput(ns("K_sp"),
                               "Nombre de groupes :",
@@ -106,11 +114,14 @@ mod_nspca_ui <- function(id){
                  numericInput(ns("heatmap_fontsize_row"), "Row fontsize", value = 4, min = 0, max = 100, step = 0.1),
           ),
           column(6,
-                 textInput(ns("legend_name"),"Entrez un nom de legende",value = "legendname"),
+                 textInput(ns("legend_name"),"Entrez un nom de legende",value = "Heatmap"),
           ),
-          column(6,
+          column(3,
                  selectInput(ns("color"),"Heatmap color",c("magma","inferno","plasma","viridis",
-                                                           "cividis","rocket","mako","turbo"),selected="magma")
+                                                           "cividis","rocket","mako","turbo"),selected="turbo")
+          ),
+          column(3,
+                 selectInput(ns("BG_color"),"Heatmap background color",c("white","black"),selected="black")
           ),
           actionButton(ns("val_a3"), "valider"),
           helpText(h3("Heatmap")),
@@ -134,7 +145,7 @@ mod_nspca_ui <- function(id){
           shinycssloaders::withSpinner(plotOutput(ns("hist_var"), height = "600px")),
           downloadButton(ns("down_hist_var"), label = "Download the plot", style="color:#000000; display: block"),
           downloadButton(ns("down_histVar"), label = "Download data", style="color:#000000; display: block"),
-          ###Ajout de possibilité de charger des données textes
+          ###Ajout de possibilite de charger des donnees textes
           width=12
       ),
     )
@@ -158,13 +169,18 @@ mod_nspca_server <- function(id,r=r){
       NSPCA <- nsprcomp(r$df(), ncomp =input$nb_comp, nneg=TRUE, scale.= as.logical(input$scale), center=as.logical(input$center))
     })
 
-    #met à jour le numeric input
+    #met a jour le numeric input
     observeEvent(nspca(),{
       nb_x <- nrow(nspca()$x)
       nb_r <- nrow(nspca()$rotation)
       updateNumericInput(inputId = "nb_cont_ind_plot", max = nb_x, value = nb_x)
       updateNumericInput(inputId = "nb_cont_ind_mat", max = nb_x, value = nb_x)
       updateNumericInput(inputId = "nb_cont_var_plot", max = nb_r, value = nb_r)
+    })
+
+    plot_hist_dim_var <- eventReactive(input$val_a1,{
+      L_nspca <- nspca()
+      plot(L_nspca$sdev, main = "Plot of contribution for each component to standard deviation", xlab="component", ylab="additional standard deviation")
     })
 
     plot_hist_ind <- eventReactive(input$val_a2,{
@@ -207,6 +223,7 @@ mod_nspca_server <- function(id,r=r){
         return(vec)
     })
 
+    ##color
     fun_color <- reactive({
       switch(input$color,
              "magma" = viridis::magma(256),
@@ -220,6 +237,22 @@ mod_nspca_server <- function(id,r=r){
       )
     })
 
+    aff_color <- reactive({
+      if(input$BG_color == "white"){
+        return("black")
+      }else{
+        return("white")
+      }
+    })
+
+    dend_color <- reactive({
+      if(input$BG_color == "white"){
+        return(gpar())
+      }else{
+        return(gpar(col ="white"))
+      }
+    })
+
     datamat <- reactive({
       mat_o <- matnspca_o()
       mat <- mat_o[vec_mat(),]
@@ -228,57 +261,95 @@ mod_nspca_server <- function(id,r=r){
 
     #distance ligne
     distm_ml <- reactive({
-      dMat <- stats::dist(datamat(), method = input$inDist)
+      id <- showNotification("Running row distance... Wait", duration = NULL, closeButton = FALSE, type = "warning")
+      on.exit(removeNotification(id), add = TRUE)
+      tryCatch({
+        dMat <- stats::dist(datamat(), method = input$inDist)
+        return(dMat)
+      }, error = function(e) {
+        showFeedback(inputId = "inDist", text = e$message, color = "#d9534f",
+                     icon = shiny::icon("exclamation-sign", lib = "glyphicon"),
+                     session = shiny::getDefaultReactiveDomain())
+      })
     })
 
     #distance colonne
     distm_mc <- reactive({
-      TdMat <- stats::dist(t(as.matrix(datamat())), method = input$inDist)
+      id <- showNotification("Running column distance... Wait", duration = NULL, closeButton = FALSE, type = "warning")
+      on.exit(removeNotification(id), add = TRUE)
+      tryCatch({
+        TdMat <- stats::dist(t(as.matrix(datamat())), method = input$inDist)
+        return(TdMat)
+      }, error = function(e) {
+        showFeedback(inputId = "inDist", text = e$message, color = "#d9534f",
+                     icon = shiny::icon("exclamation-sign", lib = "glyphicon"),
+                     session = shiny::getDefaultReactiveDomain())
+      })
     })
 
     HC_l <- reactive({
-      if(input$inHC != "diana"){
-        HC <- stats::hclust(distm_ml(), method= input$inHC)
-      } else{
-        HC <- stats::as.hclust(cluster::diana(distm_ml())) #HC avec diana du package cluster
-      }
-      if(input$ser=="Oui"){
-        OrdSer <- DendSer::DendSer(HC, distm_ml(), cost= costARc) #calcul de la seriation avec DendSer du package DendSer
-        HC <-  seriation::permute(HC, OrdSer)
-      }
-      return(HC)
+      id <- showNotification("Running row HC... Wait", duration = NULL, closeButton = FALSE, type = "warning")
+      on.exit(removeNotification(id), add = TRUE)
+      tryCatch({
+        if(input$inHC != "diana"){
+          HC <- stats::hclust(distm_ml(), method= input$inHC)
+        } else{
+          HC <- stats::as.hclust(cluster::diana(distm_ml())) #HC avec diana du package cluster
+        }
+        if(input$ser=="Oui"){
+          OrdSer <- DendSer::DendSer(HC, distm_ml(), cost= costARc) #calcul de la seriation avec DendSer du package DendSer
+          HC <-  seriation::permute(HC, OrdSer)
+        }
+        return(HC)
+      }, error = function(e) {
+        showFeedback(inputId = "inHC", text = e$message, color = "#d9534f",
+                     icon = shiny::icon("exclamation-sign", lib = "glyphicon"),
+                     session = shiny::getDefaultReactiveDomain())
+      })
     })
 
     HC_c <- reactive({
-      if(input$inHC != "diana"){
-        HC <- stats::hclust(distm_mc(), method= input$inHC)
-      } else{
-        HC <- stats::as.hclust(cluster::diana(distm_mc())) #HC avec diana du package cluster
-      }
-      if(input$ser=="Oui"){
-        OrdSer <- DendSer::DendSer(HC, distm_mc(), cost= costARc) #calcul de la seriation avec DendSer du package DendSer
-        HC <-  seriation::permute(HC, OrdSer)
-      }
-      return(HC)
+      id <- showNotification("Running column HC... Wait", duration = NULL, closeButton = FALSE, type = "warning")
+      on.exit(removeNotification(id), add = TRUE)
+      tryCatch({
+        if(input$inHC != "diana"){
+          HC <- stats::hclust(distm_mc(), method= input$inHC)
+        } else{
+          HC <- stats::as.hclust(cluster::diana(distm_mc())) #HC avec diana du package cluster
+        }
+        if(input$ser=="Oui"){
+          OrdSer <- DendSer::DendSer(HC, distm_mc(), cost= costARc) #calcul de la seriation avec DendSer du package DendSer
+          HC <-  seriation::permute(HC, OrdSer)
+        }
+        return(HC)
+      }, error = function(e) {
+        showFeedback(inputId = "inHC", text = e$message, color = "#d9534f",
+                     icon = shiny::icon("exclamation-sign", lib = "glyphicon"),
+                     session = shiny::getDefaultReactiveDomain())
+      })
     })
 
     ht <- eventReactive(input$val_a3,{
       req(datamat)
       mat <- datamat()
       colDend <- as.dendrogram(HC_c())
-      colDend <- color_branches(colDend, k = input$K_sp, col = c(1:input$K_sp))
+      colDend <- color_branches(colDend, k = input$K_sp, col = grDevices::rainbow(input$K_sp))
       ComplexHeatmap <- Heatmap(as.matrix((mat)^(1/input$C)), name = input$legend_name,
-                                cluster_columns = colDend ,
+                                cluster_columns = colDend,
+                                column_dend_gp = dend_color(),
                                 cluster_rows = as.dendrogram(HC_l()),
                                 show_row_dend = FALSE,
                                 show_column_dend = TRUE,
                                 col = fun_color(),
                                 column_names_max_height = max_text_width(colnames(mat)),
-                                row_names_gp = gpar(fontsize = input$heatmap_fontsize_row),
-                                column_split = input$K_sp , column_title_gp = gpar(col = c(1:input$K_sp), font = 1/input$K_sp),
-                                column_names_gp = gpar(col = c(1:input$K_sp), fontsize = input$heatmap_fontsize_col))
+                                row_names_gp = gpar(fontsize = input$heatmap_fontsize_row,
+                                                    col=aff_color()),
+                                column_split = input$K_sp , column_title_gp = gpar(col = rainbow(input$K_sp), font = 1/input$K_sp),
+                                column_names_gp = gpar(col = rainbow(input$K_sp), fontsize = input$heatmap_fontsize_col),
+                                heatmap_legend_param = list(title_gp = gpar(col=aff_color()),labels_gp = gpar(col=aff_color())),
+      )
 
-      draw(ComplexHeatmap)
+      draw(ComplexHeatmap, background = input$BG_color)
     })
 
 
@@ -289,6 +360,31 @@ mod_nspca_server <- function(id,r=r){
 
 
     ##output
+    output$hist_dim_var <- renderPlot({
+      req(plot_hist_dim_var)
+      plot_hist_dim_var()
+    })
+
+    output$down_dim_var <- downloadHandler(
+      filename =  function() {
+        paste0("Plot_of_standard_deviation_explain_by_component.pdf")
+      },
+      # content is a function with argument file. content writes the plot to the device
+      content = function(file) {
+        grDevices::pdf(file) # open the pdf device
+        plot(nspca()$sdev, main = "Plot of contribution for each component to standard deviation", xlab="component", ylab="additional standard deviation")
+        grDevices::dev.off()  # turn the device off
+      })
+
+    output$down_dim_var_data <- downloadHandler(
+      filename = function() {
+        paste0("Standard_deviation_explain_by_each_component.csv")
+      },
+      content = function(file) {
+        write.csv(nspca()$sdev,file)
+      }
+    )
+
     output$hist_ind <- renderPlot({
       req(plot_hist_ind)
       plot_hist_ind()

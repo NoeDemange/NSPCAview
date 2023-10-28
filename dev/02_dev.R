@@ -29,6 +29,7 @@ usethis::use_package("grid")
 usethis::use_package("seriation")
 usethis::use_package("cluster")
 usethis::use_package("shinyFeedback")
+usethis::use_package("grDevices")
 
 ## Add modules ----
 ## Create a module infrastructure in R/

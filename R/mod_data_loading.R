@@ -49,9 +49,11 @@ mod_data_loading_ui <- function(id){
           ),
           column(6,
                  numericInput(ns("max_zero_row"), "Maximum number of zero by row", value = 10, min = 0),
+                 numericInput(ns("max_one_row"), "Maximum number of one by row", value = 10, min = 0),
           ),
           column(6,
                  numericInput(ns("max_zero_col"), "Maximum number of zero by column", value = 10, min = 0),
+                 numericInput(ns("max_one_col"), "Maximum number of one by column", value = 10, min = 0),
           ),
           column(12,
                  actionButton(ns("val_d2"), "valider"),
@@ -111,6 +113,8 @@ mod_data_loading_server <- function(id,r=r){
     observeEvent(data(),{
       updateNumericInput(inputId = "max_zero_col", max = nrow(data()), min = 0, value = nrow(data()))
       updateNumericInput(inputId = "max_zero_row", max = ncol(data()), min = 0, value = ncol(data()))
+      updateNumericInput(inputId = "max_one_col", max = nrow(data()), min = 0, value = nrow(data()))
+      updateNumericInput(inputId = "max_one_row", max = ncol(data()), min = 0, value = ncol(data()))
     })
 
     r$df <- eventReactive(input$val_d2,{
@@ -118,6 +122,8 @@ mod_data_loading_server <- function(id,r=r){
       datamat <- data()
       datamat <- datamat[rowSums(datamat==0)<=input$max_zero_row,]
       datamat <- datamat[,colSums(datamat==0)<=input$max_zero_col]
+      datamat <- datamat[rowSums(datamat==1)<=input$max_one_row,]
+      datamat <- datamat[,colSums(datamat==1)<=input$max_one_col]
       return(datamat)
     })
 
