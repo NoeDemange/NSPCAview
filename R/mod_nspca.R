@@ -254,6 +254,8 @@ mod_nspca_server <- function(id,r=r){
     })
 
     datamat <- reactive({
+      hideFeedback(inputId="inDist")
+      hideFeedback(inputId="inHC")
       mat_o <- matnspca_o()
       mat <- mat_o[vec_mat(),]
       return(mat)
