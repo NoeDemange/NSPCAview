@@ -15,6 +15,8 @@
 #' @import DendSer
 #' @import grid
 #' @import cluster
+#' @import tibble
+#' @import ggplot2
 #' @import shinyFeedback
 #' @importFrom utils write.csv
 #' @importFrom dendextend color_branches
@@ -47,7 +49,7 @@ mod_nspca_ui <- function(id){
             actionButton(ns("val_a1"), "valider"),
           ),
           ###Contribution des dimensions a la variance totale###
-          helpText(h3("Plot contribution des dimensions a la variance totale")),
+          helpText(h3("Histogramme contribution des dimensions a la variance totale")),
           shinycssloaders::withSpinner(plotOutput(ns("hist_dim_var"), height = "600px")),
           downloadButton(ns("down_dim_var"), label = "Download the plot", style="color:#000000; display: block"),
           downloadButton(ns("down_dim_var_data"), label = "Download data", style="color:#000000; display: block"),
@@ -178,9 +180,20 @@ mod_nspca_server <- function(id,r=r){
       updateNumericInput(inputId = "nb_cont_var_plot", max = nb_r, value = nb_r)
     })
 
-    plot_hist_dim_var <- eventReactive(input$val_a1,{
-      L_nspca <- nspca()
-      plot(L_nspca$sdev, main = "Plot of contribution for each component to standard deviation", xlab="component", ylab="additional standard deviation")
+    var_exp <- eventReactive(input$val_a1,{
+      tibble(PC=paste0("PC_", formatC(1:input$nb_comp, width=2, flag="0")),
+             var=(nspca()$sdev)^2,
+             prop=(nspca()$sdev)^2/sum((nspca()$sdev)^2),
+             cum_prop=cumsum((nspca()$sdev)^2/sum((nspca()$sdev)^2))
+      )
+    })
+
+    plot_hist_dim_var <- reactive({
+      req(var_exp)
+      ggplot(var_exp(), aes(x=var_exp()$PC,y=var_exp()$cum_prop))+
+        geom_bar(stat="identity", position="dodge")+
+        geom_text(aes(label=paste0(formatC(100 * var_exp()$cum_prop, digits=3), "%")),vjust = 1,hjust = .5,position = position_dodge(0.9))+
+        labs(title = "Variance Explained by Each Principal Component",y = "Cumulative_Variance", x="PC")
     })
 
     plot_hist_ind <- eventReactive(input$val_a2,{
@@ -369,21 +382,21 @@ mod_nspca_server <- function(id,r=r){
 
     output$down_dim_var <- downloadHandler(
       filename =  function() {
-        paste0("Plot_of_standard_deviation_explain_by_component.pdf")
+        paste0("Plot_of_variance_explain_by_component.pdf")
       },
       # content is a function with argument file. content writes the plot to the device
       content = function(file) {
         grDevices::pdf(file) # open the pdf device
-        plot(nspca()$sdev, main = "Plot of contribution for each component to standard deviation", xlab="component", ylab="additional standard deviation")
+        plot(plot_hist_dim_var())
         grDevices::dev.off()  # turn the device off
       })
 
     output$down_dim_var_data <- downloadHandler(
       filename = function() {
-        paste0("Standard_deviation_explain_by_each_component.csv")
+        paste0("Variance_explain_by_each_component.csv")
       },
       content = function(file) {
-        write.csv(nspca()$sdev,file)
+        write.csv(var_exp(),file)
       }
     )
 

@@ -30,6 +30,8 @@ usethis::use_package("seriation")
 usethis::use_package("cluster")
 usethis::use_package("shinyFeedback")
 usethis::use_package("grDevices")
+usethis::use_package("tibble")
+usethis::use_package("ggplot2")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
